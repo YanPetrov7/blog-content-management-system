@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { CommentModule } from '../../comment/comment.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { MongooseModule } from '@nestjs/mongoose';
         dbName: config.get<string>('MONGO_DB_NAME'),
       }),
     }),
+    CommentModule,
   ],
   exports: [MongooseModule],
 })
