@@ -106,8 +106,27 @@ export class PostService {
 
   async update(id: number, dto: UpdatePostDto): Promise<Post> {
     const post = await this.postRepository.findOneBy({ id });
+
     if (!post) {
       throw new NotFoundException(`Post with id: "${id}" not found`);
+    }
+
+    if (dto.author_id) {
+      const author = await this.userService.findOne(dto.author_id);
+
+      if (!author) {
+        throw new NotFoundException(`User with id: ${dto.author_id} not found`);
+      }
+    }
+
+    if (dto.category_id) {
+      const category = await this.categoryService.findOne(dto.category_id);
+
+      if (!category) {
+        throw new NotFoundException(
+          `Category with id: ${dto.category_id} not found`,
+        );
+      }
     }
 
     await this.postRepository.update({ id }, dto);
