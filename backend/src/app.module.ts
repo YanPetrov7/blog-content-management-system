@@ -6,7 +6,6 @@ import { CategoryModule } from './category/category.module';
 import { PostModule } from './post/post.module';
 import { CommentModule } from './comment/comment.module';
 import { AppController } from './app.controller';
-import { UserService } from './user/user.service';
 
 @Module({
   imports: [

@@ -13,7 +13,7 @@ export class CommentService {
     @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
     private readonly postService: PostService,
     private readonly userService: UserService,
-  ) { }
+  ) {}
 
   async findAll(): Promise<Comment[]> {
     return this.commentModel.find().exec();

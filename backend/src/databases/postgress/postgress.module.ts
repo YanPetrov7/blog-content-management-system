@@ -14,4 +14,4 @@ import { typeOrmConfig } from './config/typeorm.config';
   ],
   exports: [TypeOrmModule],
 })
-export class PostgressModule { }
+export class PostgressModule {}
