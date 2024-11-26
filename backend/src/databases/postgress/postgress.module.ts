@@ -7,8 +7,10 @@ import { typeOrmConfig } from './config/typeorm.config';
   imports: [
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) =>
-        typeOrmConfig(configService),
+      useFactory: (configService: ConfigService) => {
+        console.log(typeOrmConfig(configService))
+        return typeOrmConfig(configService);
+      }
     }),
   ],
   exports: [TypeOrmModule],

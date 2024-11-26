@@ -12,7 +12,7 @@ export const typeOrmConfig = (
   port: configService.get<number>('POSTGRES_PORT'),
   username: configService.get<string>('POSTGRES_USERNAME'),
   password: configService.get<string>('POSTGRES_PW'),
-  database: configService.get<string>('POSTGRES_DB_NAME'),
+  database: configService.get<string>('POSTGRES_NAME'),
   entities: [User, Category, Post],
   synchronize: true,
 });

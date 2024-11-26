@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USERNAME}
       POSTGRES_PASSWORD: ${POSTGRES_PW}
-      POSTGRES_DB: ${POSTGRES_DB_NAME}
+      POSTGRES_DB: ${POSTGRES_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data:rw
     ports:
@@ -25,7 +25,8 @@ services:
     networks:
       - app-network
   nestjs-app:
-    build: .
+    build:
+      context: ./backend
     ports:
       - '3000:3000'
     environment:
@@ -33,7 +34,7 @@ services:
       POSTGRES_PORT: 5432
       POSTGRES_USERNAME: ${POSTGRES_USERNAME}
       POSTGRES_PW: ${POSTGRES_PW}
-      POSTGRES_NAME: ${POSTGRES_DB_NAME}
+      POSTGRES_NAME: ${POSTGRES_NAME}
       MONGO_HOST: mongo
       MONGO_PORT: 27017
       MONGO_USERNAME: ${MONGO_USERNAME}

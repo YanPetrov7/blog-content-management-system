@@ -10,7 +10,7 @@ import { CommentModule } from './comment/comment.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: '../.env',
     }),
     DatabaseModule,
     UserModule,
