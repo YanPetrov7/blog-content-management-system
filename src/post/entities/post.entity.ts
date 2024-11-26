@@ -46,7 +46,7 @@ export class Post {
     nullable: false,
     default: false,
   })
-  is_published: boolean;
+  is_published?: boolean;
 
   @CreateDateColumn()
   created_at: Date;

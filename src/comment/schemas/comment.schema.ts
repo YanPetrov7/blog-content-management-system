@@ -9,11 +9,8 @@ export class Comment extends Document {
 
   @Prop({ required: true })
   @IsInt()
-  user_id: number;
-
-  @Prop({ required: true })
-  @IsInt()
-  post_id: number;
+  postId: number;
 }
 
+export type CommentDocument = Comment & Document;
 export const CommentSchema = SchemaFactory.createForClass(Comment);
