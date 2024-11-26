@@ -10,9 +10,9 @@ export const typeOrmConfig = (
   type: 'postgres',
   host: configService.get<string>('POSTGRES_HOST'),
   port: configService.get<number>('POSTGRES_PORT'),
-  username: configService.get<string>('POSTGRES_USERNAME'),
-  password: configService.get<string>('POSTGRES_PW'),
-  database: configService.get<string>('POSTGRES_NAME'),
+  username: configService.get<string>('POSTGRES_USER'),
+  password: configService.get<string>('POSTGRES_PASSWORD'),
+  database: configService.get<string>('POSTGRES_DB'),
   entities: [User, Category, Post],
   synchronize: true,
 });

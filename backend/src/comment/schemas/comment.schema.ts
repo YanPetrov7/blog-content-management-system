@@ -8,6 +8,7 @@ export class Comment extends Document {
   content: string;
 
   @Prop({ required: true })
+  @IsInt()
   authorId: number;
 
   @Prop({ required: true })
