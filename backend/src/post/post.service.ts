@@ -18,7 +18,16 @@ export class PostService {
   ) {}
 
   async findAll(dto: PostFilterDto): Promise<Post[]> {
-    const { title, author, category, sortBy, sortOrder, is_published } = dto;
+    const {
+      title,
+      author,
+      category,
+      sortBy,
+      sortOrder,
+      is_published,
+      page,
+      limit,
+    } = dto;
 
     const query = this.postRepository
       .createQueryBuilder('post')
@@ -43,6 +52,12 @@ export class PostService {
 
     const orderDirection = sortOrder || SortOrder.ASC;
     query.orderBy(`post.${sortBy || 'created_at'}`, orderDirection);
+
+    const pageNumber = parseInt(page, 10) || 1;
+    const pageSize = parseInt(limit, 10) || 10;
+    const skip = (pageNumber - 1) * pageSize;
+
+    query.skip(skip).take(pageSize);
 
     return query.getMany();
   }

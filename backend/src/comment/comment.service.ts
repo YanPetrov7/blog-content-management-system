@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { CommentDocument, Comment } from './schemas';
-import { CreateCommentDto, UpdateCommentDto } from './dto';
+import { CommentFilterDto, CreateCommentDto } from './dto';
 import { OperationResultDto } from '../dto';
 import { PostService } from '../post/post.service';
 import { UserService } from '../user/user.service';
@@ -15,19 +15,28 @@ export class CommentService {
     private readonly userService: UserService,
   ) {}
 
-  async findAll(): Promise<Comment[]> {
-    return this.commentModel.find().exec();
+  async findAll(postId: number, dto: CommentFilterDto): Promise<Comment[]> {
+    const page = parseInt(dto.page, 10) || 1;
+    const limit = parseInt(dto.limit, 10) || 10;
+    const skip = (page - 1) * limit;
+
+    const comments: Comment[] = await this.commentModel
+      .find({ postId })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    return comments;
   }
 
-  async findOne(id: string): Promise<Comment> {
-    return this.commentModel.findById(id).exec();
-  }
-
-  async create(dto: CreateCommentDto): Promise<OperationResultDto> {
-    const post = await this.postService.findOne(dto.postId);
+  async create(
+    postId: number,
+    dto: CreateCommentDto,
+  ): Promise<OperationResultDto> {
+    const post = await this.postService.findOne(postId);
 
     if (!post) {
-      throw new NotFoundException(`Post with id: ${dto.postId} not found`);
+      throw new NotFoundException(`Post with id: ${postId} not found`);
     }
 
     const user = await this.userService.findOne(dto.authorId);
@@ -36,7 +45,10 @@ export class CommentService {
       throw new NotFoundException(`User with id: ${dto.authorId} not found`);
     }
 
-    const newComment = new this.commentModel(dto);
+    const newComment = new this.commentModel({
+      ...dto,
+      postId,
+    });
     await newComment.save();
 
     const result: OperationResultDto = {
@@ -47,45 +59,25 @@ export class CommentService {
     return result;
   }
 
-  async update(id: string, dto: UpdateCommentDto): Promise<Comment> {
-    if (!mongoose.isValidObjectId(id)) {
-      throw new NotFoundException(`Invalid comment id: ${id}`);
+  async remove(postId: number, id: string): Promise<OperationResultDto> {
+    const post = await this.postService.findOne(postId);
+
+    if (!post) {
+      throw new NotFoundException(`Post with id: ${postId} not found`);
     }
 
-    if (dto.postId) {
-      const post = await this.postService.findOne(dto.postId);
-
-      if (!post) {
-        throw new NotFoundException(`Post with id: ${dto.postId} not found`);
-      }
-    }
-
-    if (dto.authorId) {
-      const user = await this.userService.findOne(dto.authorId);
-
-      if (!user) {
-        throw new NotFoundException(`User with id: ${dto.authorId} not found`);
-      }
-    }
-
-    const updatedComment = await this.commentModel
-      .findByIdAndUpdate(id, dto, { new: true })
-      .exec();
-
-    return updatedComment;
-  }
-
-  async remove(id: string): Promise<OperationResultDto> {
     if (!mongoose.isValidObjectId(id)) {
       throw new NotFoundException(`Invalid comment id: ${id}`);
     }
 
     const deleteCommentResult = await this.commentModel
-      .deleteOne({ _id: id })
+      .deleteOne({ _id: id, postId })
       .exec();
 
     if (deleteCommentResult.deletedCount === 0) {
-      throw new NotFoundException(`Comment with id: ${id} not found`);
+      throw new NotFoundException(
+        `Comment with id: ${id} and postId: ${postId} not found`,
+      );
     }
 
     const result: OperationResultDto = {

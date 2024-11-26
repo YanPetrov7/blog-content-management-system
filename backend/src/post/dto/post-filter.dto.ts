@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsNumberString } from 'class-validator';
 import { SortBy, SortOrder } from '../enum';
 
 export class PostFilterDto {
@@ -25,4 +25,12 @@ export class PostFilterDto {
   @IsOptional()
   @IsEnum(SortOrder)
   sortOrder?: SortOrder;
+
+  @IsOptional()
+  @IsNumberString()
+  page?: string;
+
+  @IsOptional()
+  @IsNumberString()
+  limit?: string;
 }
