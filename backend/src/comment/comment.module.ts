@@ -4,11 +4,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Comment, CommentSchema } from './schemas';
 import { CommentService } from './comment.service';
 import { PostModule } from '../post/post.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Comment.name, schema: CommentSchema }]),
     PostModule,
+    UserModule,
   ],
   providers: [CommentService],
   controllers: [CommentController],

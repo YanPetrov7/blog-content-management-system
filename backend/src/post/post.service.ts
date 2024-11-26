@@ -18,7 +18,7 @@ export class PostService {
   ) {}
 
   async findAll(dto: PostFilterDto): Promise<Post[]> {
-    const { title, author, category, sortBy, sortOrder } = dto;
+    const { title, author, category, sortBy, sortOrder, is_published } = dto;
 
     const query = this.postRepository
       .createQueryBuilder('post')
@@ -35,6 +35,10 @@ export class PostService {
 
     if (category) {
       query.andWhere('category.name = :category', { category });
+    }
+
+    if (is_published) {
+      query.andWhere('post.is_published = :is_published', { is_published });
     }
 
     const orderDirection = sortOrder || SortOrder.ASC;

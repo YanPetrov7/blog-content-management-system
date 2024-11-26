@@ -15,6 +15,10 @@ export class PostFilterDto {
   category?: string;
 
   @IsOptional()
+  @IsString()
+  is_published?: boolean;
+
+  @IsOptional()
   @IsEnum(SortBy)
   sortBy?: SortBy;
 

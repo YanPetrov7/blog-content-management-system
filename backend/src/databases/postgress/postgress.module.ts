@@ -8,11 +8,10 @@ import { typeOrmConfig } from './config/typeorm.config';
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        console.log(typeOrmConfig(configService))
         return typeOrmConfig(configService);
-      }
+      },
     }),
   ],
   exports: [TypeOrmModule],
 })
-export class PostgressModule {}
+export class PostgressModule { }
