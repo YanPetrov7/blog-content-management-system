@@ -24,6 +24,26 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PW}
     networks:
       - app-network
+  nestjs-app:
+    build: .
+    ports:
+      - '3000:3000'
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME}
+      POSTGRES_PW: ${POSTGRES_PW}
+      POSTGRES_NAME: ${POSTGRES_NAME}
+      MONGO_HOST: mongo
+      MONGO_PORT: 27017
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PW: ${MONGO_PW}
+      MONGO_DB_NAME: ${MONGO_DB_NAME}
+    depends_on:
+      - postgres
+      - mongo
+    networks:
+      - app-network
 
 networks:
   app-network:
