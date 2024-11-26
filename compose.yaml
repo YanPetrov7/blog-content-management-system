@@ -1,42 +1,82 @@
 services:
   postgres:
     image: postgres:latest
-    env_file:
-      - .env
+    container_name: blog-postgresdb
+    restart: always
+    env_file: .env
     volumes:
       - postgres_data:/var/lib/postgresql/data:rw
     ports:
       - 5432:5432
     networks:
-      - app-network
+      - backend-network
 
   mongo:
     image: mongo:latest
-    volumes:
-      - mongo-data:/data/db
-    ports:
-      - '27017:27017'
+    container_name: blog-mongodb
     restart: always
-    env_file:
-      - .env
+    env_file: .env
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
     networks:
-      - app-network
-  nestjs-app:
+      - backend-network
+
+  backend1:
     build:
       context: ./backend
-    ports:
-      - '3000:3000'
-    env_file:
-      - .env
+    container_name: blog-backend-1
+    env_file: .env
+    networks:
+      - frontend-network
+      - backend-network
     depends_on:
       - postgres
       - mongo
+
+  backend2:
+    build:
+      context: ./backend
+    container_name: blog-backend-2
+    env_file: .env
     networks:
-      - app-network
+      - frontend-network
+      - backend-network
+    depends_on:
+      - postgres
+      - mongo
+
+  backend3:
+    build:
+      context: ./backend
+    container_name: blog-backend-3
+    env_file: .env
+    networks:
+      - frontend-network
+      - backend-network
+    depends_on:
+      - postgres
+      - mongo
+
+  balancer:
+    build:
+      context: ./load-balancer
+      target: final
+    container_name: blog-balancer
+    ports:
+      - "8090:8090"
+    networks:
+      - frontend-network
+    depends_on:
+      - backend1
+      - backend2
+      - backend3
 
 networks:
-  app-network:
+  frontend-network:
+  backend-network:
 
 volumes:
   postgres_data:
-  mongo-data:
+  mongo_data:
