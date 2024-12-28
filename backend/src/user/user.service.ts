@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import * as argon2 from 'argon2';
 import { OperationResultDto } from '../dto';
+import { compressImage } from '../common';
 
 @Injectable()
 export class UserService {
@@ -46,6 +47,7 @@ export class UserService {
     const newUser: User = this.userRepository.create({
       ...dto,
       password_hash: hashedPassword,
+      avatar: await compressImage(dto.avatar),
     });
 
     this.userRepository.save(newUser);
@@ -64,7 +66,13 @@ export class UserService {
       throw new NotFoundException(`User with id: "${id}" not found`);
     }
 
-    await this.userRepository.update({ id }, dto);
+    await this.userRepository.update(
+      { id },
+      {
+        ...dto,
+        avatar: await compressImage(dto.avatar),
+      },
+    );
 
     const updatedUser = await this.userRepository.findOneBy({ id });
 

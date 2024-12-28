@@ -26,6 +26,9 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true })
   last_name?: string;
 
+  @Column({ type: 'bytea', nullable: true })
+  avatar?: Buffer;
+
   @CreateDateColumn()
   created_at: Date;
 
