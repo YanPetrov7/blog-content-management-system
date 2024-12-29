@@ -1,0 +1,52 @@
+[
+  {
+    "content": "This is a great post!",
+    "authorId": 1,
+    "postId": 1
+  },
+  {
+    "content": "I completely agree with the points made in this article.",
+    "authorId": 1,
+    "postId": 1
+  },
+  {
+    "content": "Thanks for sharing this information.",
+    "authorId": 1,
+    "postId": 1
+  },
+  {
+    "content": "I found this post very helpful.",
+    "authorId": 2,
+    "postId": 1
+  },
+  {
+    "content": "Can you provide more details on this topic?",
+    "authorId": 2,
+    "postId": 2
+  },
+  {
+    "content": "I have a different perspective on this issue.",
+    "authorId": 2,
+    "postId": 2
+  },
+  {
+    "content": "This is an insightful post.",
+    "authorId": 3,
+    "postId": 2
+  },
+  {
+    "content": "I learned a lot from this article.",
+    "authorId": 3,
+    "postId": 3
+  },
+  {
+    "content": "Great writing! Keep it up.",
+    "authorId": 3,
+    "postId": 3
+  },
+  {
+    "content": "I disagree with some points mentioned here.",
+    "authorId": 1,
+    "postId": 3
+  }
+]
