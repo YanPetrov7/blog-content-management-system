@@ -75,7 +75,18 @@ services:
 
 networks:
   frontend-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24
+          gateway: 10.0.0.1
+
   backend-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.0.0/24
+          gateway: 172.16.0.1
 
 volumes:
   postgres_data:
