@@ -9,7 +9,7 @@ import { Repository } from 'typeorm';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import * as argon2 from 'argon2';
 import { OperationResultDto } from '../dto';
-import { compressImage } from '../common';
+import { ProcessedImageDto, processImage } from '../common';
 
 @Injectable()
 export class UserService {
@@ -32,6 +32,47 @@ export class UserService {
     return user;
   }
 
+  async findAvatar(userId: number): Promise<ProcessedImageDto> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.avatar) {
+      throw new NotFoundException('Avatar not found');
+    }
+
+    return {
+      buffer: user.avatar,
+      format: user.avatarMime,
+    };
+  }
+
+  async removeAvatar(userId: number): Promise<OperationResultDto> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.avatar) {
+      throw new NotFoundException('Avatar not found');
+    }
+
+    await this.userRepository.update(
+      { id: userId },
+      { avatar: null, avatarMime: null },
+    );
+
+    const result: OperationResultDto = {
+      status: 'success',
+      message: 'Avatar removed successfully',
+    };
+
+    return result;
+  }
+
   async create(dto: CreateUserDto): Promise<OperationResultDto> {
     const existingUser = await this.userRepository.findOne({
       where: [{ username: dto.username }, { email: dto.email }],
@@ -44,10 +85,13 @@ export class UserService {
     }
 
     const hashedPassword = await argon2.hash(dto.password);
+    const compressedAvatarData = await processImage(dto.avatar);
+
     const newUser: User = this.userRepository.create({
       ...dto,
       password_hash: hashedPassword,
-      avatar: await compressImage(dto.avatar),
+      avatar: compressedAvatarData.buffer,
+      avatarMime: compressedAvatarData.format,
     });
 
     this.userRepository.save(newUser);
@@ -66,17 +110,20 @@ export class UserService {
       throw new NotFoundException(`User with id: "${id}" not found`);
     }
 
-    await this.userRepository.update(
-      { id },
-      {
-        ...dto,
-        avatar: await compressImage(dto.avatar),
-      },
-    );
+    let compressedAvatarData: ProcessedImageDto | undefined;
+    if (dto.avatar) {
+      compressedAvatarData = await processImage(dto.avatar);
+    }
 
-    const updatedUser = await this.userRepository.findOneBy({ id });
+    const updatedData = {
+      ...dto,
+      avatar: compressedAvatarData.buffer,
+      avatarMime: compressedAvatarData.format,
+    };
 
-    return updatedUser;
+    await this.userRepository.update({ id }, updatedData);
+
+    return this.userRepository.findOneBy({ id });
   }
 
   async remove(id: number): Promise<OperationResultDto> {

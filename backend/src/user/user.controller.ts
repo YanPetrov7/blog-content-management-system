@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import { User } from './entities';
 import { OperationResultDto } from '../dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { createFileValidationPipe } from '../common';
+import { Response } from 'express';
 
 @Controller('users')
 export class UserController {
@@ -28,6 +30,22 @@ export class UserController {
   @Get(':id')
   async findUser(@Param('id') id: number): Promise<User> {
     return this.userService.findOne(id);
+  }
+
+  @Get(':id/avatar')
+  async findUserAvatar(
+    @Param('id') id: number,
+    @Res() res: Response,
+  ): Promise<void> {
+    const avatar = await this.userService.findAvatar(id);
+
+    res.setHeader('Content-Type', avatar.format);
+    res.send(avatar.buffer);
+  }
+
+  @Delete(':id/avatar')
+  async removeUserAvatar(@Param('id') id: number): Promise<OperationResultDto> {
+    return this.userService.removeAvatar(id);
   }
 
   @Post()
