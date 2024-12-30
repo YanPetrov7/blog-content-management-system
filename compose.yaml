@@ -23,6 +23,21 @@ services:
     networks:
       - backend-network
 
+  rabbitmq:
+    image: rabbitmq:management-alpine
+    container_name: blog-rabbitmq
+    env_file: .env
+    ports:
+      - "15672:15672" # temp
+      - "5672:5672" # temp
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend1:
     build:
       context: ./backend
@@ -34,6 +49,7 @@ services:
     depends_on:
       - postgres
       - mongo
+      - rabbitmq
 
   backend2:
     build:
@@ -46,6 +62,7 @@ services:
     depends_on:
       - postgres
       - mongo
+      - rabbitmq
 
   backend3:
     build:
@@ -58,6 +75,7 @@ services:
     depends_on:
       - postgres
       - mongo
+      - rabbitmq
 
   balancer:
     build:
@@ -72,6 +90,17 @@ services:
       - backend1
       - backend2
       - backend3
+
+  mailer:
+    build:
+      context: ./mail-service
+    container_name: blog-mail-service
+    env_file: .env
+    networks:
+      - backend-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
 networks:
   frontend-network:
