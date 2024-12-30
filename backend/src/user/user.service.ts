@@ -1,21 +1,33 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { User } from './entities';
+import { User, VerificationKey } from './entities';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateUserDto, UpdateUserDto } from './dto';
+import { CreateUserDto, UpdateUserDto, CreateVerificationKeyDto } from './dto';
 import * as argon2 from 'argon2';
 import { OperationResultDto } from '../dto';
 import { ImageSize, ProcessedImageDto, processImage } from '../common';
+import { ClientProxy } from '@nestjs/microservices';
+import { ConfigService } from '@nestjs/config';
+import { VerificationKeyDto } from './dto/verification-key.dto';
+import { v4 as uuidV4 } from 'uuid';
+import { VerificationDataDto } from './dto/verification-data.dto';
 
 @Injectable()
 export class UserService {
+  private readonly VERIFICATION_KEY_EXPIRATION_TIME = 30 * 60 * 1000; // 30 minutes
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(VerificationKey)
+    private readonly verificatrionKeyRepository: Repository<VerificationKey>,
+    @Inject('EMAIL_SERVICE') private readonly emailClient: ClientProxy,
+    private readonly configService: ConfigService,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -86,12 +98,10 @@ export class UserService {
       },
     );
 
-    const result: OperationResultDto = {
+    return {
       status: 'success',
       message: 'Avatar removed successfully',
     };
-
-    return result;
   }
 
   async create(dto: CreateUserDto): Promise<OperationResultDto> {
@@ -130,12 +140,12 @@ export class UserService {
 
     await this.userRepository.save(newUser);
 
-    const result: OperationResultDto = {
+    await this.createAndSendVerificationKey(dto.email);
+
+    return {
       status: 'success',
       message: 'User created successfully',
     };
-
-    return result;
   }
 
   async update(id: number, dto: UpdateUserDto): Promise<User> {
@@ -186,5 +196,107 @@ export class UserService {
     };
 
     return result;
+  }
+
+  async verifyUser(dto: VerificationKeyDto): Promise<OperationResultDto> {
+    const verificationKey = await this.verificatrionKeyRepository.findOneBy({
+      key: dto.key,
+    });
+
+    if (!verificationKey) {
+      throw new NotFoundException('Verification key not found');
+    }
+
+    const { email, expires_at } = verificationKey;
+
+    if (expires_at < new Date()) {
+      await this.createAndSendVerificationKey(email);
+
+      await this.verificatrionKeyRepository.delete({ id: verificationKey.id });
+
+      return {
+        status: 'failed',
+        message: 'Verification key expired. New key sent to your email.',
+      };
+    }
+
+    await this.verificatrionKeyRepository.delete({ id: verificationKey.id });
+
+    const user = await this.userRepository.findOneBy({ email });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.is_verified) {
+      throw new ConflictException('User is already verified');
+    }
+
+    await this.userRepository.update(user.id, { is_verified: true });
+
+    return {
+      status: 'success',
+      message: 'User verified successfully',
+    };
+  }
+
+  private async notifyUser({
+    subject,
+    body,
+    fromAddr,
+    toAddrs,
+  }: {
+    subject: string;
+    body: string;
+    fromAddr: string;
+    toAddrs: string[];
+  }): Promise<void> {
+    const payload = {
+      subject,
+      body,
+      from_addr: fromAddr,
+      to_addrs: toAddrs,
+    };
+
+    this.emailClient.emit({ cmd: 'send_email' }, payload);
+  }
+
+  private sendVerificationEmail(dto: VerificationDataDto): void {
+    const host = this.configService.get<string>('URL_HOST');
+    const port = this.configService.get<number>('URL_PORT');
+
+    const url = `http://${host}:${port}/users/verify?key=${dto.key}`;
+
+    this.notifyUser({
+      subject: 'Verification Mail',
+      body: url,
+      fromAddr: 'blog_content_manager@example.io',
+      toAddrs: [dto.email],
+    });
+  }
+
+  private async createAndSendVerificationKey(email: string): Promise<void> {
+    const newKey = uuidV4();
+    const newExpiresAt = new Date(
+      Date.now() + this.VERIFICATION_KEY_EXPIRATION_TIME,
+    );
+
+    const createVerificationKeyDto: CreateVerificationKeyDto = {
+      key: newKey,
+      email,
+      expires_at: newExpiresAt,
+    };
+
+    const verificationDataDto: VerificationDataDto = {
+      key: newKey,
+      email,
+    };
+
+    const verificationKeyEntity = this.verificatrionKeyRepository.create(
+      createVerificationKeyDto,
+    );
+    await this.verificatrionKeyRepository.save(verificationKeyEntity);
+
+    this.sendVerificationEmail(verificationDataDto);
   }
 }

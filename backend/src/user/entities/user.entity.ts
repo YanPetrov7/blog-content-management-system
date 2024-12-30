@@ -38,6 +38,9 @@ export class User {
   @Column({ type: 'varchar', nullable: true })
   avatarMime?: string;
 
+  @Column({ type: 'boolean', default: false })
+  is_verified: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 

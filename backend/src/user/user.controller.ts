@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -22,6 +23,28 @@ import { Response } from 'express';
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Post()
+  @UseInterceptors(FileInterceptor('avatar'))
+  async createUser(
+    @Body() createUserDto: CreateUserDto,
+    @UploadedFile(createFileValidationPipe()) avatar: Express.Multer.File,
+  ): Promise<OperationResultDto> {
+    createUserDto.avatar = avatar;
+
+    return this.userService.create(createUserDto);
+  }
+
+  @Get('verify')
+  async verifyUser(@Query('key') key: string): Promise<OperationResultDto> {
+    if (!key) {
+      throw new BadRequestException('Token is required');
+    }
+
+    return this.userService.verifyUser({
+      key,
+    });
+  }
 
   @Get()
   async findAllUsers(): Promise<User[]> {
@@ -48,17 +71,6 @@ export class UserController {
   @Delete(':id/avatar')
   async removeUserAvatar(@Param('id') id: number): Promise<OperationResultDto> {
     return this.userService.removeAvatar(id);
-  }
-
-  @Post()
-  @UseInterceptors(FileInterceptor('avatar'))
-  async createUser(
-    @Body() createUserDto: CreateUserDto,
-    @UploadedFile(createFileValidationPipe()) avatar: Express.Multer.File,
-  ): Promise<OperationResultDto> {
-    createUserDto.avatar = avatar;
-
-    return this.userService.create(createUserDto);
   }
 
   @Put(':id')

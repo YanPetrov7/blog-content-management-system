@@ -154,33 +154,34 @@ class EmailConsumer:
             logger.info("RabbitMQ connection closed")
 
     def process_message(self, method_frame, properties, body):
-        try:
-            message = json.loads(body.decode())
-            subject = message.get("subject")
-            body_text = message.get("body")
-            from_addr = message.get("from_addr")
-            to_addrs = message.get("to_addrs")
+       try:
+           message = json.loads(body.decode())
+           data = message.get("data", {})
+           subject = data.get("subject")
+           body_text = data.get("body")
+           from_addr = data.get("from_addr")
+           to_addrs = data.get("to_addrs")
 
-            if not all([subject, body_text, from_addr, to_addrs]):
-                logger.error("Invalid message format: %s", message)
-                self.channel.basic_nack(
-                    delivery_tag=method_frame.delivery_tag, requeue=False
-                )
-                return
+           if not all([subject, body_text, from_addr, to_addrs]):
+               logger.error("Invalid message format: %s", message)
+               self.channel.basic_nack(
+                   delivery_tag=method_frame.delivery_tag, requeue=False
+               )
+               return
 
-            logger.debug("Received message: %s", message)
-            self.email_sender.send_email(subject, body_text, from_addr, to_addrs)
-            self.channel.basic_ack(delivery_tag=method_frame.delivery_tag)
-        except json.JSONDecodeError as e:
-            logger.error("Failed to decode JSON message: %s", e)
-            self.channel.basic_nack(
-                delivery_tag=method_frame.delivery_tag, requeue=False
-            )
-        except Exception as e:
-            logger.error("Error processing message: %s", e, exc_info=True)
-            self.channel.basic_nack(
-                delivery_tag=method_frame.delivery_tag, requeue=True
-            )
+           logger.debug("Received message: %s", message)
+           self.email_sender.send_email(subject, body_text, from_addr, to_addrs)
+           self.channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+       except json.JSONDecodeError as e:
+           logger.error("Failed to decode JSON message: %s", e)
+           self.channel.basic_nack(
+               delivery_tag=method_frame.delivery_tag, requeue=False
+           )
+       except Exception as e:
+           logger.error("Error processing message: %s", e, exc_info=True)
+           self.channel.basic_nack(
+               delivery_tag=method_frame.delivery_tag, requeue=True
+           )
 
     def stop_consuming(self) -> None:
         logger.info("Stopping consumption...")

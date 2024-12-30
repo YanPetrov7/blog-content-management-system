@@ -2,7 +2,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Category } from '../../../category/entities';
 import { Post } from '../../../post/entities';
-import { User } from '../../../user/entities';
+import { User, VerificationKey } from '../../../user/entities';
 
 export const typeOrmConfig = (
   configService: ConfigService,
@@ -13,6 +13,6 @@ export const typeOrmConfig = (
   username: configService.get<string>('POSTGRES_USER'),
   password: configService.get<string>('POSTGRES_PASSWORD'),
   database: configService.get<string>('POSTGRES_DB'),
-  entities: [User, Category, Post],
+  entities: [User, Category, Post, VerificationKey],
   synchronize: true,
 });
