@@ -6,6 +6,7 @@ import { CategoryModule } from './category/category.module';
 import { PostModule } from './post/post.module';
 import { CommentModule } from './comment/comment.module';
 import { AppController } from './app.controller';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -18,7 +19,9 @@ import { AppController } from './app.controller';
     CategoryModule,
     PostModule,
     CommentModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
+  providers: [],
 })
 export class AppModule {}

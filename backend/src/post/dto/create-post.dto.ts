@@ -1,7 +1,7 @@
 import {
   IsBoolean,
-  IsInt,
   IsNotEmpty,
+  IsNumberString,
   IsOptional,
   IsString,
 } from 'class-validator';
@@ -15,15 +15,18 @@ export class CreatePostDto {
   @IsNotEmpty()
   content: string;
 
-  @IsInt()
+  @IsNumberString()
   @IsNotEmpty()
   author_id: number;
 
-  @IsInt()
+  @IsNumberString()
   @IsOptional()
   category_id?: number;
 
   @IsBoolean()
   @IsOptional()
   is_published: boolean;
+
+  @IsOptional()
+  image?: Express.Multer.File;
 }

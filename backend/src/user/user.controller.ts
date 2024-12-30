@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Res,
   UploadedFile,
   UseInterceptors,
@@ -15,7 +16,7 @@ import { UserService } from './user.service';
 import { User } from './entities';
 import { OperationResultDto } from '../dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { createFileValidationPipe } from '../common';
+import { createFileValidationPipe, ImageSize } from '../common';
 import { Response } from 'express';
 
 @Controller('users')
@@ -35,9 +36,10 @@ export class UserController {
   @Get(':id/avatar')
   async findUserAvatar(
     @Param('id') id: number,
+    @Query('avatar_size') size: ImageSize,
     @Res() res: Response,
   ): Promise<void> {
-    const avatar = await this.userService.findAvatar(id);
+    const avatar = await this.userService.findAvatar(id, size);
 
     res.setHeader('Content-Type', avatar.format);
     res.send(avatar.buffer);

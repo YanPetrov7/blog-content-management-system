@@ -9,7 +9,7 @@ import { Repository } from 'typeorm';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import * as argon2 from 'argon2';
 import { OperationResultDto } from '../dto';
-import { ProcessedImageDto, processImage } from '../common';
+import { ImageSize, ProcessedImageDto, processImage } from '../common';
 
 @Injectable()
 export class UserService {
@@ -32,19 +32,35 @@ export class UserService {
     return user;
   }
 
-  async findAvatar(userId: number): Promise<ProcessedImageDto> {
+  async findAvatar(
+    userId: number,
+    avatar_size: ImageSize,
+  ): Promise<ProcessedImageDto> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    if (!user.avatar) {
-      throw new NotFoundException('Avatar not found');
+    let avatar: Buffer;
+
+    switch (avatar_size) {
+      case ImageSize.SMALL:
+        avatar = user.avatar_small;
+        break;
+      case ImageSize.MEDIUM:
+        avatar = user.avatar_medium;
+        break;
+      case ImageSize.LARGE:
+        avatar = user.avatar_large;
+        break;
+      default:
+        avatar = user.avatar_medium;
+        break;
     }
 
     return {
-      buffer: user.avatar,
+      buffer: avatar,
       format: user.avatarMime,
     };
   }
@@ -56,13 +72,18 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    if (!user.avatar) {
+    if (!user.avatar_small && !user.avatar_medium && !user.avatar_large) {
       throw new NotFoundException('Avatar not found');
     }
 
     await this.userRepository.update(
       { id: userId },
-      { avatar: null, avatarMime: null },
+      {
+        avatarMime: null,
+        avatar_small: null,
+        avatar_medium: null,
+        avatar_large: null,
+      },
     );
 
     const result: OperationResultDto = {
@@ -85,16 +106,29 @@ export class UserService {
     }
 
     const hashedPassword = await argon2.hash(dto.password);
-    const compressedAvatarData = await processImage(dto.avatar);
+
+    let avatar_small: Buffer | undefined;
+    let avatar_medium: Buffer | undefined;
+    let avatar_large: Buffer | undefined;
+    let avatarMime: string | undefined;
+
+    if (dto.avatar) {
+      const compressedAvatarsData = await processImage(dto.avatar);
+      [avatar_small, avatar_medium, avatar_large] =
+        compressedAvatarsData.images;
+      avatarMime = compressedAvatarsData.format;
+    }
 
     const newUser: User = this.userRepository.create({
       ...dto,
       password_hash: hashedPassword,
-      avatar: compressedAvatarData.buffer,
-      avatarMime: compressedAvatarData.format,
+      avatar_small,
+      avatar_medium,
+      avatar_large,
+      avatarMime,
     });
 
-    this.userRepository.save(newUser);
+    await this.userRepository.save(newUser);
 
     const result: OperationResultDto = {
       status: 'success',
@@ -110,15 +144,26 @@ export class UserService {
       throw new NotFoundException(`User with id: "${id}" not found`);
     }
 
-    let compressedAvatarData: ProcessedImageDto | undefined;
+    let avatar_small: Buffer | undefined;
+    let avatar_medium: Buffer | undefined;
+    let avatar_large: Buffer | undefined;
+    let avatarMime: string | undefined;
+
     if (dto.avatar) {
-      compressedAvatarData = await processImage(dto.avatar);
+      const compressedAvatarData = await processImage(dto.avatar);
+      [avatar_small, avatar_medium, avatar_large] = compressedAvatarData.images;
+      avatarMime = compressedAvatarData.format;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { avatar, ...dtoWithoutAvatar } = dto;
+
     const updatedData = {
-      ...dto,
-      avatar: compressedAvatarData.buffer,
-      avatarMime: compressedAvatarData.format,
+      ...dtoWithoutAvatar,
+      ...(avatar_small && { avatar_small }),
+      ...(avatar_medium && { avatar_medium }),
+      ...(avatar_large && { avatar_large }),
+      ...(avatarMime && { avatarMime }),
     };
 
     await this.userRepository.update({ id }, updatedData);

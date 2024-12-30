@@ -27,7 +27,13 @@ export class User {
   last_name?: string;
 
   @Column({ type: 'bytea', nullable: true })
-  avatar?: Buffer;
+  avatar_small?: Buffer;
+
+  @Column({ type: 'bytea', nullable: true })
+  avatar_medium?: Buffer;
+
+  @Column({ type: 'bytea', nullable: true })
+  avatar_large?: Buffer;
 
   @Column({ type: 'varchar', nullable: true })
   avatarMime?: string;

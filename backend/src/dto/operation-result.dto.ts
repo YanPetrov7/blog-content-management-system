@@ -5,4 +5,7 @@ export class OperationResultDto {
   status: string;
 
   message: string | Array<string>;
+
+  @IsString()
+  data?: string;
 }

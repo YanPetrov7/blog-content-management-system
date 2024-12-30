@@ -48,6 +48,15 @@ export class Post {
   })
   is_published?: boolean;
 
+  @Column({ type: 'varchar', nullable: true })
+  image_small?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  image_medium?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  image_large?: string;
+
   @CreateDateColumn()
   created_at: Date;
 

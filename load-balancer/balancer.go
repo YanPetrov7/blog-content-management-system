@@ -23,7 +23,7 @@ const (
 
 var (
 	port         = flag.Int("port", 8090, "load balancer port")
-	timeoutSec   = flag.Int("timeout-sec", 1, "request timeout time in seconds")
+	timeoutSec   = flag.Int("timeout-sec", 10, "request timeout time in seconds")
 	https        = flag.Bool("https", false, "whether backends support HTTPs")
 	traceEnabled = flag.Bool("trace", false, "whether to include tracing information into responses")
 )
