@@ -36,7 +36,7 @@ export class User {
   avatar_large?: Buffer;
 
   @Column({ type: 'varchar', nullable: true })
-  avatarMime?: string;
+  avatar_mime?: string;
 
   @Column({ type: 'boolean', default: false })
   is_verified: boolean;

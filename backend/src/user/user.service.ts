@@ -73,7 +73,7 @@ export class UserService {
 
     return {
       buffer: avatar,
-      format: user.avatarMime,
+      format: user.avatar_mime,
     };
   }
 
@@ -91,7 +91,7 @@ export class UserService {
     await this.userRepository.update(
       { id: userId },
       {
-        avatarMime: null,
+        avatar_mime: null,
         avatar_small: null,
         avatar_medium: null,
         avatar_large: null,
@@ -120,13 +120,13 @@ export class UserService {
     let avatar_small: Buffer | undefined;
     let avatar_medium: Buffer | undefined;
     let avatar_large: Buffer | undefined;
-    let avatarMime: string | undefined;
+    let avatar_mime: string | undefined;
 
     if (dto.avatar) {
       const compressedAvatarsData = await processImage(dto.avatar);
       [avatar_small, avatar_medium, avatar_large] =
         compressedAvatarsData.images;
-      avatarMime = compressedAvatarsData.format;
+      avatar_mime = compressedAvatarsData.format;
     }
 
     const newUser: User = this.userRepository.create({
@@ -135,7 +135,7 @@ export class UserService {
       avatar_small,
       avatar_medium,
       avatar_large,
-      avatarMime,
+      avatar_mime,
     });
 
     await this.userRepository.save(newUser);
