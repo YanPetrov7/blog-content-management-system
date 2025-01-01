@@ -1,4 +1,3 @@
-import os
 import sys
 import ssl
 import smtplib
@@ -10,7 +9,7 @@ import pika
 
 from email.message import EmailMessage
 from pydantic_settings import BaseSettings
-from typing import Optional, Union, List
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -154,34 +153,35 @@ class EmailConsumer:
             logger.info("RabbitMQ connection closed")
 
     def process_message(self, method_frame, properties, body):
-       try:
-           message = json.loads(body.decode())
-           data = message.get("data", {})
-           subject = data.get("subject")
-           body_text = data.get("body")
-           from_addr = data.get("from_addr")
-           to_addrs = data.get("to_addrs")
+        try:
+            message = json.loads(body.decode())
+            data = message.get("data", {})
 
-           if not all([subject, body_text, from_addr, to_addrs]):
-               logger.error("Invalid message format: %s", message)
-               self.channel.basic_nack(
-                   delivery_tag=method_frame.delivery_tag, requeue=False
-               )
-               return
+            subject = data.get("subject")
+            body_text = data.get("body")
+            from_addr = data.get("from_addr")
+            to_addrs = data.get("to_addrs")
 
-           logger.debug("Received message: %s", message)
-           self.email_sender.send_email(subject, body_text, from_addr, to_addrs)
-           self.channel.basic_ack(delivery_tag=method_frame.delivery_tag)
-       except json.JSONDecodeError as e:
-           logger.error("Failed to decode JSON message: %s", e)
-           self.channel.basic_nack(
-               delivery_tag=method_frame.delivery_tag, requeue=False
-           )
-       except Exception as e:
-           logger.error("Error processing message: %s", e, exc_info=True)
-           self.channel.basic_nack(
-               delivery_tag=method_frame.delivery_tag, requeue=True
-           )
+            if not all([subject, body_text, from_addr, to_addrs]):
+                logger.error("Invalid message format: %s", message)
+                self.channel.basic_nack(
+                    delivery_tag=method_frame.delivery_tag, requeue=False
+                )
+                return
+
+            logger.debug("Received message: %s", message)
+            self.email_sender.send_email(subject, body_text, from_addr, to_addrs)
+            self.channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+        except json.JSONDecodeError as e:
+            logger.error("Failed to decode JSON message: %s", e)
+            self.channel.basic_nack(
+                delivery_tag=method_frame.delivery_tag, requeue=False
+            )
+        except Exception as e:
+            logger.error("Error processing message: %s", e, exc_info=True)
+            self.channel.basic_nack(
+                delivery_tag=method_frame.delivery_tag, requeue=True
+            )
 
     def stop_consuming(self) -> None:
         logger.info("Stopping consumption...")
@@ -189,27 +189,6 @@ class EmailConsumer:
         if self.consume_thread and self.consume_thread.is_alive():
             self.consume_thread.join()
         logger.info("Consumption stopped")
-
-
-# def get_env_variable(
-#     var_name: str,
-#     default: Optional[str] = None,
-#     required: bool = True,
-#     parse_int: bool = False,
-# ) -> Optional[Union[str, int]]:
-#     value = os.getenv(var_name, default)
-#     if required and not value:
-#         logger.error("Environment variable %s is not set.", var_name)
-#         sys.exit(1)
-
-#     if parse_int and value:
-#         try:
-#             value = int(value)
-#         except ValueError:
-#             logger.error("Environment variable %s must be an integer. Got '%s' instead.", var_name, value)
-#             sys.exit(1)
-
-#     return value
 
 
 class Settings(BaseSettings):
@@ -232,17 +211,6 @@ def main():
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[logging.StreamHandler()],
     )
-
-    # # SMTP settings
-    # smtp_server = get_env_variable("SMTP_HOSTNAME")
-    # smtp_port = get_env_variable("SMTP_PORT", default="587", parse_int=True)
-    # username = get_env_variable("SMTP_USERNAME")
-    # password = get_env_variable("SMTP_PASSWORD")
-    # # AMQP settings
-    # amqp_url = get_env_variable("AMQP_URL")
-    # exchange_name = get_env_variable("EXCHANGE_NAME", default="direct_exchange", required=False)
-    # queue_name = get_env_variable("QUEUE_NAME", default="email_queue", required=False)
-    # routing_key = get_env_variable("ROUTING_KEY", default="amqp.email", required=False)
 
     conf = Settings()
     exchange_type = "direct"
