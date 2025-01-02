@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { User, VerificationKey } from './entities';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsSelect, Repository } from 'typeorm';
 import { CreateUserDto, UpdateUserDto, CreateVerificationKeyDto } from './dto';
 import * as argon2 from 'argon2';
 import { OperationResultDto } from '../dto';
@@ -20,6 +20,17 @@ import { VerificationDataDto } from './dto/verification-data.dto';
 @Injectable()
 export class UserService {
   private readonly VERIFICATION_KEY_EXPIRATION_TIME = 30 * 60 * 1000; // 30 minutes
+  private readonly USER_OUTPUT_FIELDS: FindOptionsSelect<User> = {
+    id: true,
+    username: true,
+    email: true,
+    first_name: true,
+    last_name: true,
+    avatar_mime: true,
+    is_verified: true,
+    created_at: true,
+    updated_at: true,
+  };
 
   constructor(
     @InjectRepository(User)
@@ -28,40 +39,18 @@ export class UserService {
     private readonly verificatrionKeyRepository: Repository<VerificationKey>,
     @Inject('EMAIL_SERVICE') private readonly emailClient: ClientProxy,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find({
-      select: [
-        'id',
-        'username',
-        'email',
-        'password_hash',
-        'first_name',
-        'last_name',
-        'avatar_mime',
-        'is_verified',
-        'created_at',
-        'updated_at',
-      ],
+      select: this.USER_OUTPUT_FIELDS,
     });
   }
 
   async findOne(id: number): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id },
-      select: [
-        'id',
-        'username',
-        'email',
-        'password_hash',
-        'first_name',
-        'last_name',
-        'avatar_mime',
-        'is_verified',
-        'created_at',
-        'updated_at',
-      ],
+      select: this.USER_OUTPUT_FIELDS,
     });
 
     if (!user) {
