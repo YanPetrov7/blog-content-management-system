@@ -173,12 +173,12 @@ export class UserService {
     let avatar_small: Buffer | undefined;
     let avatar_medium: Buffer | undefined;
     let avatar_large: Buffer | undefined;
-    let avatarMime: string | undefined;
+    let avatar_mime: string | undefined;
 
     if (dto.avatar) {
       const compressedAvatarData = await processImage(dto.avatar);
       [avatar_small, avatar_medium, avatar_large] = compressedAvatarData.images;
-      avatarMime = compressedAvatarData.format;
+      avatar_mime = compressedAvatarData.format;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -189,12 +189,17 @@ export class UserService {
       ...(avatar_small && { avatar_small }),
       ...(avatar_medium && { avatar_medium }),
       ...(avatar_large && { avatar_large }),
-      ...(avatarMime && { avatarMime }),
+      ...(avatar_mime && { avatar_mime }),
     };
 
     await this.userRepository.update({ id }, updatedData);
 
-    return this.userRepository.findOneBy({ id });
+    const updatedUser = await this.userRepository.findOne({
+      where: { id },
+      select: this.USER_OUTPUT_FIELDS,
+    });
+
+    return updatedUser;
   }
 
   async remove(id: number): Promise<OperationResultDto> {

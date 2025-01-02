@@ -42,8 +42,6 @@ export async function processImage(
 
   const resizedImagesBuffers = await Promise.all(promises);
 
-  console.log('resizedImagesBuffers', resizedImagesBuffers);
-
   return {
     images: resizedImagesBuffers,
     format,
