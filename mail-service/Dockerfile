@@ -1,8 +1,9 @@
-FROM python:3.12.8-slim-bookworm
+FROM python:3.12.8-alpine3.21
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends clang gcc build-essential libssl-dev && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apk update && \
+    apk add --no-cache openssl ca-certificates
+
+RUN update-ca-certificates
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
