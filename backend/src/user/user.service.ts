@@ -39,7 +39,7 @@ export class UserService {
     private readonly verificatrionKeyRepository: Repository<VerificationKey>,
     @Inject('EMAIL_SERVICE') private readonly emailClient: ClientProxy,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find({
