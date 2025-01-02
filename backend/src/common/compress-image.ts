@@ -1,3 +1,4 @@
+import { InternalServerErrorException } from '@nestjs/common';
 import * as sharp from 'sharp';
 
 export interface ProcessedImagesDto {
@@ -37,7 +38,16 @@ export async function processImage(
   }
 
   const promises = sizes.map(async (size) => {
-    return processedImage.clone().resize(size.width, size.height).toBuffer();
+    try {
+      return await processedImage
+        .clone()
+        .resize(size.width, size.height)
+        .toBuffer();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Failed to process image: ${error.message}`,
+      );
+    }
   });
 
   const resizedImagesBuffers = await Promise.all(promises);
